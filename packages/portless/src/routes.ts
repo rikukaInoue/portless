@@ -340,14 +340,19 @@ export class RouteStore {
         !("hostname" in value) ||
         value.hostname !== replaceSkippedHostname
     );
-    fs.writeFileSync(
-      this.routesPath,
-      JSON.stringify([...orderActiveFirst(routes), ...skipped], null, 2),
-      {
+    const tempPath = `${this.routesPath}.tmp`;
+    try {
+      fs.rmSync(tempPath, { force: true });
+      fs.writeFileSync(tempPath, JSON.stringify([...orderActiveFirst(routes), ...skipped], null, 2), {
         mode: FILE_MODE,
-      }
-    );
-    fixOwnership(this.routesPath);
+        flag: "wx",
+      });
+      fixOwnership(tempPath);
+      fs.renameSync(tempPath, this.routesPath);
+    } catch (err) {
+      fs.rmSync(tempPath, { force: true });
+      throw err;
+    }
   }
 
   private readRouteFile(file: string): RouteMapping[] {
