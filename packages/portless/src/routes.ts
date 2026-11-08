@@ -343,10 +343,14 @@ export class RouteStore {
     const tempPath = `${this.routesPath}.tmp`;
     try {
       fs.rmSync(tempPath, { force: true });
-      fs.writeFileSync(tempPath, JSON.stringify([...orderActiveFirst(routes), ...skipped], null, 2), {
-        mode: FILE_MODE,
-        flag: "wx",
-      });
+      fs.writeFileSync(
+        tempPath,
+        JSON.stringify([...orderActiveFirst(routes), ...skipped], null, 2),
+        {
+          mode: FILE_MODE,
+          flag: "wx",
+        }
+      );
       fixOwnership(tempPath);
       fs.renameSync(tempPath, this.routesPath);
     } catch (err) {
