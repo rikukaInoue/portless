@@ -933,7 +933,8 @@ function startProxyServer(
   };
 
   try {
-    watcher = fs.watch(routesPath, () => {
+    watcher = fs.watch(store.dir, (_event, filename) => {
+      if (filename && filename !== path.basename(routesPath)) return;
       if (debounceTimer) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(reloadRoutes, DEBOUNCE_MS);
     });
@@ -2748,6 +2749,13 @@ ${colors.bold("Examples:")}
 }
 
 async function handleAlias(args: string[]): Promise<void> {
+  const helpIsUpstreamValue = args.some(
+    (arg, index) => arg === "--upstream" && ["--help", "-h"].includes(args[index + 1] ?? "")
+  );
+  if (hasHelpFlag(args) && !helpIsUpstreamValue) {
+    printAliasHelp();
+    return;
+  }
   const parsed = parseCommandArgs(
     "alias",
     args.slice(1),
@@ -2756,15 +2764,9 @@ async function handleAlias(args: string[]): Promise<void> {
       "--force": "boolean",
       "--tld": "value",
       "--upstream": "value",
-      "--help": "boolean",
-      "-h": "boolean",
     },
     2
   );
-  if (parsed.has("--help") || parsed.has("-h")) {
-    printAliasHelp();
-    return;
-  }
   const isRemove = parsed.has("--remove");
   const removeName = parsed.value("--remove");
   const [aliasName, aliasPortValue] = parsed.positionals;
